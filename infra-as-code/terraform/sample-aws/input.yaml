@@ -1,26 +1,24 @@
 # Replace with the name which you want to give to your EKS cluster
 # Cluster name can have only lowercase alphanumeric characters and hyphens
 # For example: "digit-demo"
-cluster_name: "test-demo"
+cluster_name: "digit-lts-dsn"
 
 # Replace with ssh key name you want
-ssh_key_name: "test-demo-ssh-key" 
+ssh_key_name: "digit-lts-ssh-key-dsn" 
 
 # Replace with public key which you want to add in your EC2 machines # ssh key which you want to add in your EC2 machines
-public_ssh_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEyfjLaKskpv90BCvgVm2IFtf5V+B41YM7pSt73QID5/lByMuLRIcBum9n48A/BlxhkyI4TuF1GHXFKJju7UZA9ybVkhugpJhqFp+rjVcXNgYbeGToYcLRE88aFbhNDw9ZtSJF5Kd2fZUT9Vj7cMi1LqRLAprOp8FZWpdn1+QBDTJQVPUzWux0hmh56L00fjxTIMPhTbH8EQcyd4SVBuJvAO4Gs3/oNLOUhyA4yF49/bvY2x8Y4v9IDZgnHqTuAMeMQNn+nPoxP1eNVwOM/3Lx/a505uvMiim/cLSNFmn6sozo8VSwsK0lJGiiGaZiV7GLGEwVL+QA8/pDxXId5Rxb"
+public_ssh_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCj7FCV58q1drPoH6TOQwGF63mKRX7f2xdRUcR6nuokP+34GnSLP1YCe8iPszCeFNAjeOQK9kSxluJooox9gaU+l0c3lX29GQoBe7F4d56wxDK/ng9iAwEhaZzzj+214o6jprYPs5qnrtELTHSzjgNTBKcQ9/dyxxI83i9Ddm7Q1C7TZtSyOzN+KmkaasFadobtTqhTyKO1jOAEU8o5UGdWjjZz45V36+rze8+juhiHKlMjAaf7E71WwhqRoHf9EjNkrh/pcuuyH8JOlvAKlTnP6ZB0k+kMiJdPA5N1h9/Woi+Y8wW+ansDg1TD3Pjoyjc7/y6qtIXPAMbT4mSJPw6n ubuntu@ip-172-31-79-189"
 
 # Name you want to give to your Database
 # DB name must contain only alphanumeric characters
-db_name: "testdemodb"
+db_name: "digitltsdbdsn"
 
 # Replace with DB username you want
 # DB user name must contain only alphanumeric characters
-db_username: "testdemo" 
+db_username: "digitltsdsn" 
 
 # Replace with Domain name you want for your web applications
-domain_name: "test-githubactions.digit.org"
+domain_name: "digit.dicert.ng"
 
 # Replace with the name you want to give to your S3 bucket which is used to store the terraform state
-terraform_state_bucket_name: "test-demo-githubactions-bucket"
-
-
+terraform_state_bucket_name: "digit-lts-githubactions-bucket-dsn"
