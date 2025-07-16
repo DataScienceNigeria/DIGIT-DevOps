@@ -3,6 +3,8 @@
 # tag for more information
 #
 
+elastic_inference_accelerator = null
+
 variable "cluster_name" {
   description = "Name of the Kubernetes cluster"
   default = "digit-lts-dsn" #REPLACE
