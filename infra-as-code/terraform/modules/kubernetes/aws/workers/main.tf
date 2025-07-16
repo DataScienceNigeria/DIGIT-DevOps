@@ -66,19 +66,36 @@ USERDATA
 }
 
 resource "aws_launch_template" "launch_template" {
-  name                                = "template-${var.cluster_name}"
+  name                                 = "template-${var.cluster_name}"
+
   iam_instance_profile {
-    name = "${aws_iam_instance_profile.worker_nodes.name}"
+    name = aws_iam_instance_profile.worker_nodes.name
   }
-  image_id                             = "${data.aws_ami.eks_worker.id}"
+
+  image_id                             = data.aws_ami.eks_worker.id
   ebs_optimized                        = true
   instance_initiated_shutdown_behavior = "terminate"
-  instance_type                        = "${var.instance_type}"
-  key_name                             = "${var.ssh_key_name}"
-  vpc_security_group_ids               = "${var.worker_nodes_security_grp_ids}"
+  instance_type                        = var.instance_type
+  key_name                             = var.ssh_key_name
+  vpc_security_group_ids               = var.worker_nodes_security_grp_ids
 
-  user_data                            = "${base64encode(data.template_file.user_data_hw.rendered)}"
+  user_data                            = base64encode(data.template_file.user_data_hw.rendered)
 }
+
+# resource "aws_launch_template" "launch_template" {
+#   name                                = "template-${var.cluster_name}"
+#   iam_instance_profile {
+#     name = "${aws_iam_instance_profile.worker_nodes.name}"
+#   }
+#   image_id                             = "${data.aws_ami.eks_worker.id}"
+#   ebs_optimized                        = true
+#   instance_initiated_shutdown_behavior = "terminate"
+#   instance_type                        = "${var.instance_type}"
+#   key_name                             = "${var.ssh_key_name}"
+#   vpc_security_group_ids               = "${var.worker_nodes_security_grp_ids}"
+# 
+#   user_data                            = "${base64encode(data.template_file.user_data_hw.rendered)}"
+# }
 
 resource "aws_autoscaling_group" "asg" {
   vpc_zone_identifier = "${var.subnets}"
