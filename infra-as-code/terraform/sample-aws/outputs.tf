@@ -16,6 +16,14 @@ output "cluster_endpoint" {
   value       = module.eks.cluster_endpoint
 }
 
+output "es_master_volume_ids" {
+  value = "${module.es-master.volume_ids}"
+}
+
+output "es_data_volume_ids" {
+  value = "${module.es-data-v1.volume_ids}"
+}
+
 output "db_instance_endpoint" {
   value = module.db.db_instance_endpoint
 }
@@ -49,4 +57,3 @@ output "worker_security_group_id" {
 output "eks_cluster_iam_role_name" {
   value = module.eks.cluster_iam_role_name
 }
-

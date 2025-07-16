@@ -70,6 +70,3 @@ variable "public_key" {
 }
 
 ## change ssh key_name eg. digit-quickstart_your-name
-
-
-
