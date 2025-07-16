@@ -132,7 +132,7 @@ jobs:
           terraform -version             
       - name: Terraform Init - remotestate
         id: init
-        run: terraform init
+        run: terraform init -upgrade
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform Validate - remotestate
         id: validate
@@ -149,7 +149,7 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform init - Infra creation
         id: init-Infra
-        run: terraform init
+        run: terraform init -upgrade
         working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Validate - Infra creation
         id: validate-Infra
@@ -464,13 +464,13 @@ jobs:
         run: kubectl delete svc ingress-nginx-controller -n backbone   
         continue-on-error: true
       - name: Terraform Init - remotestate
-        run: terraform init
+        run: terraform init -upgrade
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform Validate - remotestate
         run: terraform validate -no-color
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform Init - Infra destruction
-        run: terraform init
+        run: terraform init -upgrade
         working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Validate - Infra destruction
         run: terraform validate -no-color
