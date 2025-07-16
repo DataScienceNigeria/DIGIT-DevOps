@@ -5,7 +5,7 @@
 
 variable "cluster_name" {
   description = "Name of the Kubernetes cluster"
-  default = <cluster_name> #REPLACE
+  default = "digit-lts-dsn" #REPLACE
 }
 
 variable "vpc_cidr_block" {
@@ -36,7 +36,7 @@ variable "instance_type" {
 
 variable "override_instance_types" {
   description = "Arry of instance types for SPOT instances"
-  default = ["r5a.large", "r5ad.large", "r6a.large"]
+  default = ["r5a.large", "r5ad.large", "r5d.large", "m4.xlarge"]
   
 }
 
@@ -47,25 +47,25 @@ variable "number_of_worker_nodes" {
 
 variable "ssh_key_name" {
   description = "ssh key name, not required if your using spot instance types"
-  default = <ssh_key_name> #REPLACE
+  default = "digit-lts-ssh-key" #REPLACE
 }
 
 
 variable "db_name" {
   description = "RDS DB name. Make sure there are no hyphens or other special characters in the DB name. Else, DB creation will fail"
-  default = <db_name> #REPLACE
+  default = "digitltsdb" #REPLACE
 }
 
 variable "db_username" {
   description = "RDS database user name"
-  default = <db_username> #REPLACE
+  default = "digitltsdsn" #REPLACE
 }
 
 #DO NOT fill in here. This will be asked at runtime
 variable "db_password" {}
 
 variable "public_key" {
-  default = <public_ssh_key>
+  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCMMO2fKEHqIvKxME67L/nDtBRUNDiqtshgCI5QnBmQMOb6zdjk5sVgPDdV8cHwdztfPJWk5pcEasyIsiqDLyIODH0FQl6pwytVsfkI2AHIwJ1zyDB1fq0b67uEoEyyehYEstbyHEpHKRtejftlfBgcOXnmVVMSH9vlwJ8I47xBPO+CncHo2V+CCqJckaneH0BmED0e1EUnCJD2Dx5fKt0V4KB8+KXxw+cs/AYw11IF0eN8cYXDKH9s/c7HXHSy89dHcwHzmWcLXcJV6b2p3kbL6YGwyfWG/4He5sr8cMIA/Rmp744hszZECbKFaychncDtSI30huWq4lkS2lSGEuMJ"
   description = "ssh key"
 }
 
