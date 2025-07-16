@@ -140,11 +140,11 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws/remote-state  
       - name: Terraform Plan - remotestate
         id: plan
-        run: terraform plan -no-color -input=false 
+        run: terraform plan # -no-color -input=false 
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform Apply - remotestate
         id: apply
-        run: terraform apply -no-color -input=false -auto-approve
+        run: terraform apply  -auto-approve # -no-color -input=false -auto-approve
         continue-on-error: true  
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform init - Infra creation
@@ -165,7 +165,7 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Apply - Infra creation
         id: apply-Infra
-        run: terraform apply -no-color -input=false -auto-approve -var db_password=$db_password
+        run: terraform apply -auto-approve -var db_password=$db_password # -no-color -input=false -auto-approve -var db_password=$db_password
         continue-on-error: true  
         working-directory: infra-as-code/terraform/sample-aws
       - name: Install AWS IAM Authenticator
