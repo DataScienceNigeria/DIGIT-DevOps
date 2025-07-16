@@ -126,7 +126,7 @@ jobs:
           echo "db_password=$db_password" >> $GITHUB_ENV     
       - name: Download Terraform
         run: |
-          curl -o terraform.zip https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+          curl -o terraform.zip https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip
           unzip terraform.zip
           sudo mv terraform /usr/local/bin/
           terraform -version             
@@ -140,11 +140,11 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws/remote-state  
       - name: Terraform Plan - remotestate
         id: plan
-        run: terraform plan # -no-color -input=false 
+        run: terraform plan -no-color -input=false 
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform Apply - remotestate
         id: apply
-        run: terraform apply  -auto-approve # -no-color -input=false -auto-approve
+        run: terraform apply -no-color -input=false -auto-approve
         continue-on-error: true  
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform init - Infra creation
@@ -165,7 +165,7 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Apply - Infra creation
         id: apply-Infra
-        run: terraform apply -auto-approve -var db_password=$db_password # -no-color -input=false -auto-approve -var db_password=$db_password
+        run: terraform apply -no-color -input=false -auto-approve -var db_password=$db_password
         continue-on-error: true  
         working-directory: infra-as-code/terraform/sample-aws
       - name: Install AWS IAM Authenticator
@@ -464,7 +464,7 @@ jobs:
         run: kubectl delete svc ingress-nginx-controller -n backbone   
         continue-on-error: true
       - name: Terraform Init - remotestate
-        run: terraform init -upgrade
+        run: terraform init
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Terraform Validate - remotestate
         run: terraform validate -no-color
