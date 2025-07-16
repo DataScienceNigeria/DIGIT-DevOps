@@ -3,7 +3,12 @@
 # tag for more information
 #
 
-elastic_inference_accelerator = null
+variable "elastic_inference_accelerator" {
+  description = "Elastic Inference Accelerator type (optional)"
+  type        = string
+  default     = null
+}
+
 
 variable "cluster_name" {
   description = "Name of the Kubernetes cluster"
