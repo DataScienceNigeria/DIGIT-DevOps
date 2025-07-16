@@ -237,3 +237,14 @@ module "es-data-v1" {
   disk_size_gb = "25"
   
 }
+
+resource "aws_dynamodb_table" "digit-lts-githubactions-bucket-dsn" {
+  name         = "digit-lts-githubactions-bucket-dsn"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
