@@ -77,7 +77,7 @@ releases:
             paths:
               - path: /kibana
         tls: 
-          - secretName: {{ .Values.global.domain }}-tls-certs
+          - secretName: "{{ .Values.global.domain }}-tls-certs"
             hosts:
               - {{ .Values.global.domain }}
 

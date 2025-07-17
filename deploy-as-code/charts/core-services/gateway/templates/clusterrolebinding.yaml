@@ -1,20 +1,22 @@
-{{- $envOverrides := index .Values (tpl .Chart.Name .) -}} 
+{{- $envOverrides := index .Values (tpl .Chart.Name .) -}}
 {{- $baseValues := .Values | deepCopy -}}
 {{- $values := dict "Values" (mustMergeOverwrite $baseValues $envOverrides) -}}
 {{- with mustMergeOverwrite . $values }}
+{{- if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  name: {{ .Chart.Name }}
   labels:
     app: {{ .Chart.Name }}
     group: gateway
-  name: {{ .Chart.Name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccount.name | default .Values.serviceAccount | default .Chart.Name }}
+  namespace: {{ .Values.namespace | default "egov" }}
 roleRef:
-  apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: {{ .Chart.Name }}
-subjects:
-  - kind: ServiceAccount
-    name: {{ .Values.serviceAccount }}
-    namespace: {{ .Values.namespace }} 
-{{- end -}}  
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
+{{- end }}
