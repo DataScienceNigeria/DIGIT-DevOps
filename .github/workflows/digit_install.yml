@@ -188,6 +188,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION:  ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_REGION:  ${{ secrets.AWS_REGION }}
+      - name: Create deployer directory for kubeConfig
+        run: mkdir -p deploy-as-code/deployer # <--- ADDED THIS STEP
+        working-directory: ${{ github.workspace }} # Ensure this runs from root
       - name: Updating the terraform output data in environment.yaml files for deployment
         run: terraform output -json | go run ../scripts/envYAMLUpdater.go
         working-directory: infra-as-code/terraform/sample-aws
