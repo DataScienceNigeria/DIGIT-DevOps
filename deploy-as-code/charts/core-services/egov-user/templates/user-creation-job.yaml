@@ -16,6 +16,16 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
         - |
+          # Define the user secrets for better readability and safety
+          {{- $username := "admin-user" }}
+          {{- $password := "admin-password" }}
+
+          # Check if .Values.secrets.user exists and then extract username/password
+          {{- if and .Values.secrets .Values.secrets.user }}
+            {{- $username = .Values.secrets.user.username | default "admin-user" }}
+            {{- $password = .Values.secrets.user.password | default "admin-password" }}
+          {{- end }}
+
           response=$(curl --location 'http://egov-user:8080/user/users/_createnovalidate' \
                       --header 'Content-Type: application/json' \
                       --data-raw '{
@@ -30,13 +40,13 @@ spec:
                               "authToken": "51e00caf-3218-4f15-ba70-a45f7d40abc1"
                           },
                           "user": {
-                              "userName": "{{ .Values.secrets.user.username }}",
+                              "userName": "{{ $username }}", # Use the variable
                               "name": "Admin User",
                               "gender": null,
                               "mobileNumber": "9898989898",
                               "type": "EMPLOYEE",
                               "active" : true,
-                              "password" : "{{ .Values.secrets.user.password }}",
+                              "password" : "{{ $password }}", # Use the variable
                               "roles": [
                                       {
                                           "name": "Super User",
