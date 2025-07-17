@@ -201,13 +201,13 @@ jobs:
       - name: Upload infra-as-code folder as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: infra-as-code-artifact-${{ github.run_id }} # Modified name
+          name: infra-as-code-artifact-infra-creation-${{ github.run_id }} # Modified name for uniqueness
           path: infra-as-code.tar.gz
       - name: Upload deploy-as-code folder as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: deploy-as-code-artifact-${{ github.run_id }} # Modified name
-          path: deploy-as-code.tar.gz      
+          name: deploy-as-code-artifact-infra-creation-${{ github.run_id }} # Modified name for uniqueness
+          path: deploy-as-code.tar.gz   
 
   DIGIT-deployment:
     if: ${{ github.event_name == 'push' }}
