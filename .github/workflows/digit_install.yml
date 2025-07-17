@@ -126,7 +126,7 @@ jobs:
           echo "db_password=$db_password" >> $GITHUB_ENV     
       - name: Download Terraform
         run: |
-          curl -o terraform.zip [https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip](https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip)
+          curl -o terraform.zip https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip
           unzip terraform.zip
           sudo mv terraform /usr/local/bin/
           terraform -version             
@@ -170,7 +170,7 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws
       - name: Install AWS IAM Authenticator
         run: |
-          curl -o aws-iam-authenticator [https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator](https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator)
+          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
           chmod +x ./aws-iam-authenticator
           sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
           aws-iam-authenticator version  
@@ -251,7 +251,7 @@ jobs:
           echo "db_password=$db_password" >> $GITHUB_ENV                 
       - name: Install AWS IAM Authenticator
         run: |
-          curl -o aws-iam-authenticator [https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator](https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator)
+          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
           chmod +x ./aws-iam-authenticator
           sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
           aws-iam-authenticator version  
@@ -287,7 +287,7 @@ jobs:
           HELMFILE_VERSION="v0.140.0"
 
             # Download Helmfile
-          curl -L "[https://github.com/roboll/helmfile/releases/download/$](https://github.com/roboll/helmfile/releases/download/$){HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
+          curl -L "https://github.com/roboll/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
 
             # Make the Helmfile binary executable
           chmod +x helmfile
@@ -359,7 +359,7 @@ jobs:
   #         echo "db_password=$db_password" >> $GITHUB_ENV                
   #     - name: Install AWS IAM Authenticator
   #       run: |
-  #         curl -o aws-iam-authenticator [https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator](https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator)
+  #         curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
   #         chmod +x ./aws-iam-authenticator
   #         sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
   #         aws-iam-authenticator version  
@@ -395,7 +395,7 @@ jobs:
   #         HELMFILE_VERSION="v0.140.0"
 
   #           # Download Helmfile
-  #         curl -L "[https://github.com/roboll/helmfile/releases/download/$](https://github.com/roboll/helmfile/releases/download/$){HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
+  #         curl -L "https://github.com/roboll/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64" -o helmfile
 
   #           # Make the Helmfile binary executable
   #         chmod +x helmfile
@@ -406,7 +406,7 @@ jobs:
   #           # Verify installation
   #         helmfile --version 
           
-  #         helm plugin install [https://github.com/databus23/helm-diff](https://github.com/databus23/helm-diff)
+  #         helm plugin install https://github.com/databus23/helm-diff
 
   #     - name: digit deployment
   #       run: helmfile -f digit-helmfile.yaml apply
@@ -451,7 +451,7 @@ jobs:
         working-directory: infra-as-code/terraform/scripts
       - name: Install AWS IAM Authenticator
         run: |
-          curl -o aws-iam-authenticator [https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator](https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator)
+          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
           chmod +x ./aws-iam-authenticator
           sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
           aws-iam-authenticator version  
