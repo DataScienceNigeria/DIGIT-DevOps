@@ -1,0 +1,258 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: egov
+  labels:
+    app: gateway
+    group: gateway
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    # This annotation forces a new rollout when the manifest is applied,
+    # ensuring the new init container environment variable is picked up.
+    kubectl.kubernetes.io/restartedAt: '{{ now | unixEpoch | printf "%s" }}'
+    deployment.kubernetes.io/revision: "6" # Update this revision number if you're tracking manually
+    meta.helm.sh/release-name: gateway
+    meta.helm.sh/release-namespace: egov
+spec:
+  selector:
+    matchLabels:
+      app: gateway
+      group: gateway
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 25%
+  template:
+    metadata:
+      labels:
+        app: gateway
+        group: gateway
+        pod-template-hash: "REPLACE_WITH_NEW_HASH" # This will be updated by Kubernetes automatically
+      annotations:
+        deployment-timestamp: "20250716215201" # Keep your original timestamp or update if needed
+        # The restartedAt annotation is moved to the top-level metadata for consistency
+    spec:
+      serviceAccountName: gateway-service-account
+      automountServiceAccountToken: true # Ensure this is true as per previous fixes
+      initContainers:
+        - name: gateway-kubernetes-discovery
+          image: egovio/gateway-kubernetes-discovery:core-2.9-lts-mvn-check-7f4ff55ce3-5
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+            - name: KUBERNETES_SERVICE_HOST
+              value: kubernetes.default.svc
+            - name: KUBERNETES_SERVICE_PORT
+              value: "443"
+            - name: DISCOVERY_TIMEOUT
+              value: "120"
+            - name: OUTPUT_FILE_PATH # <--- ADDED THIS ENVIRONMENT VARIABLE
+              value: /etc/zuul/routes.properties # <--- SET TO THE EXPECTED PATH
+          volumeMounts:
+            - name: zuul-routes
+              mountPath: /etc/zuul
+
+      containers:
+        - name: gateway
+          image: egovio/gateway:gateway-2.9.2-a916a090e6-40
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 768Mi
+            requests:
+              cpu: 100m
+              memory: 768Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+            periodSeconds: 60
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+            periodSeconds: 30
+            failureThreshold: 5
+          env:
+            - name: URL_LISTS
+              value: /pt-services-v2/property/_create:http://rainmaker-custom-service:8000/customization/protected/punjab-pt/property/_create|/pt-services-v2/property/_update:http://rainmaker-custom-service:8000/customization/protected/punjab-pt/property/_update|/pt-calculator-v2/propertytax/_estimate:http://rainmaker-custom-service:8000/customization/protected/punjab-pt/pt-calculator-v2/_estimate
+            - name: CUSTOM_FILTER_PROPERTY
+              value: "false"
+            - name: CUSTOM_FILTER_POSTHOOKS
+              value: "true"
+            - name: CUSTOM_FILTER_PREHOOKS
+              value: "true"
+            - name: URL_POSTHOOK_LISTS
+              value: ""
+            - name: URL_PREHOOK_LISTS
+              value: ""
+            - name: GATEWAY_ROUTES_TL_CALCULATOR_URL
+              value: http://tl-calculator:8080/
+            - name: SERVER_PORT
+              value: "8080"
+            - name: JAVA_ENABLE_DEBUG
+              value: "false"
+            - name: JAVA_OPTS
+              value: -Xmx512m -Xms512m
+            - name: SPRING_KAFKA_CONSUMER_GROUP_ID
+              value: egov-api-gateway
+            - name: SPRING_KAFKA_PRODUCER_KEY_SERIALIZER
+              value: org.apache.kafka.common.serialization.StringSerializer
+            - name: SPRING_KAFKA_PRODUCER_VALUE_SERIALIZER
+              value: org.springframework.kafka.support.serializer.JsonSerializer
+            - name: EGOV_CUSTOM_ASYNC_FILTER_TOPIC
+              value: res-custom-filter
+            - name: EGOV_OPEN_ENDPOINTS_WHITELIST
+              value: /user/oauth/token,/user-otp/v1/_send,/otp/v1/_validate,/user/citizen/_create,/localization/messages,/localization/messages/v1/_search,/user/password/nologin/_update,/tenant/v1/tenant/_search,/egov-location/boundarys,/egov-location/boundarys/boundariesByBndryTypeNameAndHierarchyTypeName,/egov-location/boundarys/getLocationByLocationName,/egov-mdms-service/v1/_search,/egov-location/location/v11/geography/_search,/filestore/v1/files/url,/pt-calculator-v2/billing-slab/_search,/egov-searcher/property-services/propertyopensearch/_get,/edcr/rest/dcr/downloadfile,/egov-location/location/v11/boundarys/_search,/filestore/v1/files/id,/filestore/v1/files,/filestore/v1/files/tag
+            - name: EGOV_MIXED_MODE_ENDPOINTS_WHITELIST
+              value: /user/_search,/access/v1/actions/mdms/_get,/tl-services/v1/_search,/tl-services/v1/BPAREG/_search,/tl-services/v1/BPAREG/_create,/tl-services/v1/BPAREG/_update,/tl-calculator/v1/BPAREG/_getbill,/bpa-services/bpa/appl/_search,/edcr/rest/dcr/scrutinize,/edcr/rest/dcr/scrutinydetails
+            - name: EVENTLOG_ENABLED
+              value: "false"
+            - name: EVENTLOG_TOPIC
+              value: springGateway-event-log
+            - name: EVENTLOG_URLS_WHITELIST
+              value: ""
+            - name: EGOV_AUTHORIZE_ACCESS_CONTROL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: egov-accesscontrol
+                  name: egov-service-host
+            - name: EGOV_AUTH_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: egov-user
+                  name: egov-service-host
+            - name: GATEWAY_HOST_CONNECT_TIMEOUT_MILLIS
+              value: "20000"
+            - name: GATEWAY_HOST_SOCKET_TIMEOUT_MILLIS
+              value: "60000"
+            - name: TRACER_OPENTRACING_ENABLED
+              value: "true"
+            - name: SECURITY_BASIC_ENABLED
+              value: "false"
+            - name: MANAGEMENT_SECURITY_ENABLED
+              value: "false"
+            - name: JAVA_ARGS
+              value: ""
+            - name: STATE_LEVEL_TENANT_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: egov-state-level-tenant-id
+                  name: egov-config
+            - name: SPRING_DATA_REDIS_DEFAULT_REPLENISHRATE
+              value: "10"
+            - name: SPRING_DATA_REDIS_DEFAULT_BURSTCAPACITY
+              value: "10"
+            - name: SPRING_ROUTES_FILEPATH
+              value: file:/etc/zuul/routes.properties
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis.backbone
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: db-url
+                  name: egov-config
+            - name: FLYWAY_ENABLED
+              value: "false"
+            - name: SPRING_FLYWAY_ENABLED
+              value: "false"
+            - name: MANAGEMENT_ENDPOINTS_WEB_BASE_PATH
+              value: /
+            - name: APP_TIMEZONE
+              valueFrom:
+                configMapKeyRef:
+                  key: timezone
+                  name: egov-config
+            - name: FLYWAY_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: db-url
+                  name: egov-config
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: db
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: db
+            - name: SPRING_DATASOURCE_TOMCAT_INITIAL_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  key: spring-datasource-tomcat-initialSize
+                  name: egov-config
+            - name: SERVER_TOMCAT_MAX_THREADS
+              value: "350"
+            - name: SERVER_TOMCAT_MAX_CONNECTIONS
+              value: "1500"
+            - name: SPRING_DATASOURCE_TOMCAT_MAX_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  key: spring-datasource-tomcat-max-active
+                  name: egov-config
+            - name: SPRING_DATASOURCE_HIKARI_MAXIMUM-POOL-SIZE
+              valueFrom:
+                configMapKeyRef:
+                  key: spring-datasource-tomcat-max-active
+                  name: egov-config
+            - name: KAFKA_CONFIG_BOOTSTRAP_SERVER_CONFIG
+              valueFrom:
+                configMapKeyRef:
+                  key: kafka-brokers
+                  name: egov-config
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  key: kafka-brokers
+                  name: egov-config
+            - name: SPRING_JPA_SHOW_SQL
+              valueFrom:
+                configMapKeyRef:
+                  key: spring-jpa-show-sql
+                  name: egov-config
+            - name: STATE_LEVEL_TENANTID_LENGTH
+              value: "1"
+            - name: IS_ENVIRONMENT_CENTRAL_INSTANCE
+              value: "false"
+            - name: STATE_SCHEMA_INDEX_POSITION_TENANTID
+              value: "0"
+            - name: KAFKA_TOPIC_AUDIT
+              value: enc-user-audit-data
+            - name: JAEGER_SERVICE_NAME
+              value: gateway
+            - name: JAEGER_SAMPLER_TYPE
+              value: remote
+            - name: JAEGER_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: JAEGER_AGENT_PORT
+              value: "6831"
+            - name: JAEGER_SAMPLER_MANAGER_HOST_PORT
+              value: "$(JAEGER_AGENT_HOST):5778"
+            - name: TRACER_OPENTRACING_ENABLED
+              value: "true"
+          volumeMounts:
+            - name: zuul-routes
+              mountPath: /etc/zuul
+      volumes:
+        - name: zuul-routes
+          emptyDir: {}
