@@ -165,7 +165,7 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Apply - Infra creation
         id: apply-Infra
-        run: terraform apply -no-color -input=false -auto-approve -var db_password=$db_password
+        run: terraform apply -no-color -input=false -auto-approve
         continue-on-error: true  
         working-directory: infra-as-code/terraform/sample-aws
       - name: Install AWS IAM Authenticator
@@ -207,7 +207,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: deploy-as-code-artifact-infra-creation-${{ github.run_id }} # Modified name for uniqueness
-          path: deploy-as-code.tar.gz   
+          path: deploy-as-code.tar.gz      
 
   DIGIT-deployment:
     if: ${{ github.event_name == 'push' }}
@@ -225,12 +225,12 @@ jobs:
       - name: Download infra-as-code folder from artifacts
         uses: actions/download-artifact@v4
         with:
-          name: infra-as-code-artifact-${{ github.run_id }} # Modified name to download
+          name: infra-as-code-artifact-infra-creation-${{ github.run_id }} # Modified name to download
           path: .
       - name: Download deploy-as-code folder from artifacts
         uses: actions/download-artifact@v4
         with:
-          name: deploy-as-code-artifact-${{ github.run_id }} # Modified name to download
+          name: deploy-as-code-artifact-infra-creation-${{ github.run_id }} # Modified name to download
           path: .
       - name: Extract infra-as-code folder
         run: tar -xzf infra-as-code.tar.gz
@@ -277,7 +277,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y gnupg
-          wget [https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux](https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux)
+          wget https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux # Removed markdown link formatting
           chmod +x sops-v3.7.1.linux
           sudo mv sops-v3.7.1.linux /usr/local/bin/sops
       # - name: Set up Helm
@@ -298,7 +298,7 @@ jobs:
             # Move Helmfile to a location in your PATH
           sudo mv helmfile /usr/local/bin/helmfile
 
-          helm plugin install [https://github.com/databus23/helm-diff](https://github.com/databus23/helm-diff)
+          helm plugin install https://github.com/databus23/helm-diff
 
             # Verify installation
           helmfile --version        
@@ -385,7 +385,7 @@ jobs:
   #       run: |
   #         sudo apt update
   #         sudo apt install -y gnupg
-  #         wget [https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux](https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux)
+  #         wget https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.linux
   #         chmod +x sops-v3.7.1.linux
   #         sudo mv sops-v3.7.1.linux /usr/local/bin/sops
   #     # - name: Set up Helm
