@@ -2,8 +2,8 @@
 
 templates:
   default: &default
-    # CORRECTED: Use Helmfile template syntax {{ .Name }} instead of Helm syntax
-    chart: ../../helm/charts/common
+    # Use the common DIGIT chart - all services use the same chart template
+    chart: ../../charts/common
     version: 0.1.0
     namespace: egov
     # This prevents helmfile exiting when it encounters a missing file
@@ -13,7 +13,6 @@ templates:
     values:
       - ../environments/env-secrets.yaml
       - ../environments/env.yaml
-      - releaseName: "{{ .Release.Name }}" # This .Release.Name is Helm's variable, for use within chart values
 
 releases:
   - name: egov-accesscontrol
@@ -123,6 +122,12 @@ releases:
   - name: gateway
     installed: true
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - serviceAccount:
+          create: true
+          name: "gateway-service-account"
 
   - name: egov-pg-service
     installed: true

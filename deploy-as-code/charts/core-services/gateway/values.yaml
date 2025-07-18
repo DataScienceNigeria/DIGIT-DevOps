@@ -3,7 +3,10 @@ labels:
   app: "gateway"
   group: "gateway"
 
-serviceAccount: gateway
+serviceAccount:
+  create: true # Or false, depending on whether you want Helm to create a ServiceAccount for this chart
+  name: gateway # This line is optional. If left empty, Helm might use a default name based on the release.
+                # If you specify it, it ensures the ServiceAccount is named "gateway".
 
 # Init Containers Configs
 initContainers:
