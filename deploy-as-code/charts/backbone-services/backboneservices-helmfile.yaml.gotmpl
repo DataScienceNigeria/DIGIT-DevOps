@@ -21,7 +21,7 @@ environments:
           # the one in the 'set' block below will be used for the chart.
           # clusterID: g4toTOWwTQSbFvZRDgHLqw== # Plain UUID for reference
       - global:
-          domain: "digit.dicert.ng"
+          domain: "certi-verse.com"
       # Correct the path to go up one directory from 'charts/backbone-services'
       - ../environments/env.yaml
 
@@ -155,6 +155,11 @@ releases:
     - provider: aws
       aws:
         zoneType: public
+        region: ap-south-1
+        # Add IAM role annotation if using IRSA
+        # serviceAccount:
+        #   annotations:
+        #     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/external-dns-role
       domainFilters:
         - certi-verse.com
       policy: upsert-only
@@ -164,8 +169,11 @@ releases:
       sources:
         - service
         - ingress
+      logLevel: info
       serviceMonitor:
         enabled: false
       rbac:
         create: true
-        serviceAccountName: external-dns
+      serviceAccount:
+        create: true
+        name: external-dns
