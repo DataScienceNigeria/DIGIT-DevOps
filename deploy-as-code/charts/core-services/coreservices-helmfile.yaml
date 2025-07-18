@@ -2,9 +2,8 @@
 
 templates:
   default: &default
-    # CORRECTED LINE: Changed from ./{{`{{ .Release.Name }}`}} to ./{{ .Release.Name }}
-    # This correctly tells Helmfile to use the release's name as the local chart directory.
-    chart: ./charts/{{ .Name }}
+    # CORRECTED: Use Helmfile template syntax {{ .Name }} instead of Helm syntax
+    chart: ../../helm/charts/common
     version: 0.1.0
     namespace: egov
     # This prevents helmfile exiting when it encounters a missing file
