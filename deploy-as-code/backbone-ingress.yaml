@@ -1,0 +1,43 @@
+# backbone-ingress.yaml (Updated)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backbone-services-ingress
+  namespace: backbone
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false" # Set to "true" for HTTPS
+    ingress.kubernetes.io/force-ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: kibana.dicert.ng # REPLACE THIS WITH A REAL DOMAIN YOU OWN
+    http:
+      paths:
+      - path: /kibana(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: kibana-kibana
+            port:
+              number: 5601
+  - host: minio.dicert.ng # REPLACE THIS WITH A REAL DOMAIN YOU OWN
+    http:
+      paths:
+      - path: /minio(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: minio
+            port:
+              number: 9001
+  - host: playground.dicert.ng # REPLACE THIS WITH A REAL DOMAIN YOU OWN
+    http:
+      paths:
+      - path: /playground(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: playground # The name of the Service you just created/verified
+            port:
+              number: 80 # The 'port' of the playground Service (from playground-service.yaml)

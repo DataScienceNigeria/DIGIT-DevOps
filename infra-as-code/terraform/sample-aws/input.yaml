@@ -18,7 +18,7 @@ db_name: "digitltsdbdsn"
 db_username: "digitltsdsn"
 
 # Replace with Domain name you want for your web applications
-domain_name: "digit.dicert.ng"
+domain_name: "certi-verse.com"
 
 # Replace with the name you want to give to your S3 bucket which is used to store the terraform state
 terraform_state_bucket_name: "digit-lts-githubactions-bucket-dsn"
