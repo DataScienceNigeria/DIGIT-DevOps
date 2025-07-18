@@ -143,25 +143,25 @@ releases:
   values:
     - ./playground/values.yaml
 
-  - name: external-dns
-    chart: external-dns/external-dns
-    version: 1.13.1
-    namespace: backbone
-    values:
-      - provider: aws
-        aws:
-          zoneType: public
-        domainFilters:
-          - certi-verse.com
-        policy: upsert-only
-        registry: txt
-        txtOwnerId: "digit-cluster"
-        interval: 1m
-        sources:
-          - service
-          - ingress
-        serviceMonitor:
-          enabled: false
-        rbac:
-          create: true
-          serviceAccountName: external-dns
+- name: external-dns
+  chart: external-dns/external-dns
+  version: 1.13.1
+  namespace: backbone
+  values:
+    - provider: aws
+      aws:
+        zoneType: public
+      domainFilters:
+        - certi-verse.com
+      policy: upsert-only
+      registry: txt
+      txtOwnerId: "digit-cluster"
+      interval: 1m
+      sources:
+        - service
+        - ingress
+      serviceMonitor:
+        enabled: false
+      rbac:
+        create: true
+        serviceAccountName: external-dns
