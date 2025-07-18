@@ -13,6 +13,7 @@ templates:
     values:
       - ../environments/env-secrets.yaml
       - ../environments/env.yaml
+      - releaseName: "{{ .Release.Name }}" # This .Release.Name is Helm's variable, for use within chart values
 
 releases:
   - name: egov-accesscontrol
