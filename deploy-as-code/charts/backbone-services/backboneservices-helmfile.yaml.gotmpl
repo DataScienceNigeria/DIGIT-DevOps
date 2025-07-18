@@ -147,6 +147,8 @@ releases:
   chart: external-dns/external-dns
   version: 1.13.1
   namespace: backbone
+  installed: true
+  <<: *default
   values:
     - provider: aws
       aws:
