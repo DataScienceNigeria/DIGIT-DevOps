@@ -3,8 +3,6 @@
 repositories:
 - name: bitnami
   url: https://charts.bitnami.com/bitnami
-- name: external-dns
-  url: https://kubernetes-sigs.github.io/external-dns/
 
 environments:
   default:
@@ -144,36 +142,3 @@ releases:
   <<: *default
   values:
     - ./playground/values.yaml
-
-- name: external-dns
-  chart: external-dns/external-dns
-  version: 1.13.1
-  namespace: backbone
-  installed: true
-  <<: *default
-  values:
-    - provider: aws
-      aws:
-        zoneType: public
-        region: ap-south-1
-        # Add IAM role annotation if using IRSA
-        # serviceAccount:
-        #   annotations:
-        #     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/external-dns-role
-      domainFilters:
-        - certi-verse.com
-      policy: upsert-only
-      registry: txt
-      txtOwnerId: "digit-cluster"
-      interval: 1m
-      sources:
-        - service
-        - ingress
-      logLevel: info
-      serviceMonitor:
-        enabled: false
-      rbac:
-        create: true
-      serviceAccount:
-        create: true
-        name: external-dns
