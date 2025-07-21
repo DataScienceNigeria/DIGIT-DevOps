@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: digit-complete-ingress
+  namespace: egov
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - certi-verse.com
+    secretName: certi-verse-com-tls-certs
+  rules:
+  - host: certi-verse.com
+    http:
+      paths:
+      # Temporarily redirect to playground service
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: playground-proxy
+            port:
+              number: 80
+---
+# Create a proxy service to reach playground in backbone namespace
+apiVersion: v1
+kind: Service
+metadata:
+  name: playground-proxy
+  namespace: egov
+spec:
+  type: ExternalName
+  externalName: playground.backbone.svc.cluster.local
+  ports:
+  - port: 80
+    targetPort: 80
+

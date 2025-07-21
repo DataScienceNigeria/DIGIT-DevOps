@@ -1,0 +1,308 @@
+# Test DIGIT UI Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: digit-ui
+  namespace: egov
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: digit-ui
+  template:
+    metadata:
+      labels:
+        app: digit-ui
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: config
+        configMap:
+          name: digit-ui-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: digit-ui
+  namespace: egov
+spec:
+  selector:
+    app: digit-ui
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: digit-ui-config
+  namespace: egov
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>DIGIT Platform - Main Portal</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+            .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { text-align: center; margin-bottom: 40px; }
+            .services { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+            .service { padding: 20px; border: 1px solid #ddd; border-radius: 5px; text-align: center; }
+            .service h3 { margin-top: 0; color: #333; }
+            a { color: #007bff; text-decoration: none; padding: 10px 20px; background: #007bff; color: white; border-radius: 5px; display: inline-block; margin-top: 10px; }
+            a:hover { background: #0056b3; }
+            .status { color: #28a745; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🏛️ DIGIT Platform</h1>
+                <h2>Digital Infrastructure for Governance, Impact & Transformation</h2>
+                <p class="status">✅ Infrastructure Online | 🔄 Core Services Initializing</p>
+            </div>
+            
+            <div class="services">
+                <div class="service">
+                    <h3>👥 Citizen Portal</h3>
+                    <p>Public service access and applications</p>
+                    <a href="/citizen">Access Citizen Portal</a>
+                </div>
+                
+                <div class="service">
+                    <h3>👔 Employee Portal</h3>
+                    <p>Government employee workspace</p>
+                    <a href="/employee">Access Employee Portal</a>
+                </div>
+                
+                <div class="service">
+                    <h3>🔗 API Gateway</h3>
+                    <p>Backend API services</p>
+                    <a href="/gateway">Access API Gateway</a>
+                </div>
+                
+                <div class="service">
+                    <h3>🛠️ Admin Tools</h3>
+                    <p>System administration and monitoring</p>
+                    <a href="https://admin.certi-verse.com" target="_blank">Access Admin Panel</a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+---
+# Employee Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee
+  namespace: egov
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: employee
+  template:
+    metadata:
+      labels:
+        app: employee
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: config
+        configMap:
+          name: employee-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee
+  namespace: egov
+spec:
+  selector:
+    app: employee
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: employee-config
+  namespace: egov
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head><title>DIGIT - Employee Portal</title></head>
+    <body style="font-family: Arial; margin: 50px; text-align: center;">
+        <h1>👔 DIGIT Employee Portal</h1>
+        <p>Government employee workspace and tools</p>
+        <p><em>Employee services are being configured...</em></p>
+        <a href="/">← Back to Main Portal</a>
+    </body>
+    </html>
+---
+# Citizen Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: citizen
+  namespace: egov
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: citizen
+  template:
+    metadata:
+      labels:
+        app: citizen
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: config
+        configMap:
+          name: citizen-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: citizen
+  namespace: egov
+spec:
+  selector:
+    app: citizen
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: citizen-config
+  namespace: egov
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head><title>DIGIT - Citizen Portal</title></head>
+    <body style="font-family: Arial; margin: 50px; text-align: center;">
+        <h1>👥 DIGIT Citizen Portal</h1>
+        <p>Access public services and submit applications</p>
+        <p><em>Citizen services are being configured...</em></p>
+        <a href="/">← Back to Main Portal</a>
+    </body>
+    </html>
+---
+# Gateway Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: egov
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: html
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: config
+        configMap:
+          name: gateway-config
+      - name: html
+        configMap:
+          name: gateway-html
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: egov
+spec:
+  selector:
+    app: gateway
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: egov
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        server {
+            listen 8080;
+            location / {
+                root /usr/share/nginx/html;
+                index index.html;
+            }
+        }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-html
+  namespace: egov
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head><title>DIGIT - API Gateway</title></head>
+    <body style="font-family: Arial; margin: 50px; text-align: center;">
+        <h1>🔗 DIGIT API Gateway</h1>
+        <p>Backend API services and integrations</p>
+        <p><em>Gateway services are being configured...</em></p>
+        <a href="/">← Back to Main Portal</a>
+    </body>
+    </html>
+
