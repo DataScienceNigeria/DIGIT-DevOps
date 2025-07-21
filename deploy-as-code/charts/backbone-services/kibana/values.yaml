@@ -153,13 +153,13 @@ ingress:
     nginx.ingress.kubernetes.io/lua-resty-waf-score-threshold: "10"
     nginx.ingress.kubernetes.io/use-regex: "true"
   hosts:
-    - host: demo.digit.org
+    - host: certi-verse.com
       paths:
         - path: /kibana
   tls: 
-   - secretName: demo.digit.org-tls-certs
+   - secretName: certi-verse.com-tls-certs
      hosts:
-       - demo.digit.org
+       - certi-verse.com
 
 readinessProbe:
   failureThreshold: 3

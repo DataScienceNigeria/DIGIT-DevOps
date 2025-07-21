@@ -30,4 +30,4 @@ echo -e "\n=== SSL Certificate Check ==="
 echo | openssl s_client -servername certi-verse.com -connect certi-verse.com:443 2>/dev/null | openssl x509 -noout -dates
 
 echo -e "\n=== Certificate Secret Check ==="
-kubectl get secret certi-verse-tls -o yaml
+kubectl get secret certi-verse.com-tls-certs -o yaml

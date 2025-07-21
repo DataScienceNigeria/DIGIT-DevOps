@@ -1,0 +1,27 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: muhammad@datasciencenigeria.ai
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: certi-verse-com-tls-prod
+  namespace: backbone
+spec:
+  secretName: certi-verse.com-tls-certs
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  - certi-verse.com

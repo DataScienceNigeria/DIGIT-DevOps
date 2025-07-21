@@ -1,0 +1,27 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: muhammad@datasciencenigeria.ai
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: certi-verse-com-tls
+  namespace: backbone
+spec:
+  secretName: certi-verse.com-tls-certs
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  dnsNames:
+  - certi-verse.com
