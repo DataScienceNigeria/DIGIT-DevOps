@@ -25,3 +25,9 @@ kubectl get ingress -A
 
 echo -e "\n=== Checking Ingress Controller Logs ==="
 kubectl logs -n backbone deployment/ingress-nginx-controller --tail=10
+
+echo -e "\n=== SSL Certificate Check ==="
+echo | openssl s_client -servername certi-verse.com -connect certi-verse.com:443 2>/dev/null | openssl x509 -noout -dates
+
+echo -e "\n=== Certificate Secret Check ==="
+kubectl get secret certi-verse-tls -o yaml
