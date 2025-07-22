@@ -116,7 +116,10 @@ releases:
     - ./kafka-kraft/values.yaml
   set:
       - name: kraft.clusterId
-        value: "WHrB+pexQSy6U5LdhuX8bw=="
+        valueFrom:
+          secretKeyRef:
+            name: kafka-kraft-kraft-cluster-id
+            key: kraft-cluster-id
       - name: auth.kafkaPassword
         value: "TestKafkaPass123!"
       - name: auth.adminPassword
