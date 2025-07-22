@@ -3,7 +3,8 @@
 #
 
 provider "aws" {
-  region = "ap-south-1"
+  region  = "ap-south-1"
+  # profile = "DSN"
 }
 
 # Using these data sources allows the configuration to be
