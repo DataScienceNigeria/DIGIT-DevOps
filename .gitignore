@@ -34,3 +34,5 @@ Session.vim
 *.terraform
 *.tfstate
 *.bak
+env-secrets.yaml
+env.yaml
