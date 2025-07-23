@@ -33,3 +33,5 @@ Session.vim
 .history
 *.terraform
 *.tfstate
+*.bak
+deploy-as-code/charts/environments/env-secrets.yaml
