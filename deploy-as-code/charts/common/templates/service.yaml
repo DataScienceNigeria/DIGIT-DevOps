@@ -1,0 +1,20 @@
+{{- $serviceName := .Values.name | default "unknown" -}}
+{{- $serviceConfig := index .Values $serviceName | default dict -}}
+{{- if and $serviceConfig.replicas (gt ($serviceConfig.replicas | int) 0) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ .Values.namespace | default "egov" }}
+  labels:
+    app: {{ $serviceName }}
+spec:
+  selector:
+    app: {{ $serviceName }}
+  ports:
+  - name: http
+    port: {{ $serviceConfig.httpPort | default 8080 }}
+    targetPort: {{ $serviceConfig.httpPort | default 8080 }}
+    protocol: TCP
+  type: ClusterIP
+{{- end }}

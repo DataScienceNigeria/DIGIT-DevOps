@@ -1,0 +1,39 @@
+{{- $serviceName := .Values.name | default "unknown" -}}
+{{- $serviceConfig := index .Values $serviceName | default dict -}}
+{{- if and $serviceConfig.replicas (gt ($serviceConfig.replicas | int) 0) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ .Values.namespace | default "egov" }}
+  labels:
+    app: {{ $serviceName }}
+spec:
+  replicas: {{ $serviceConfig.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ $serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $serviceName }}
+        deployment-timestamp: "{{ date "20060102150405" now }}"
+    spec:
+      containers:
+      - name: {{ $serviceName }}
+        image: {{ include "common.serviceImage" . }}
+        ports:
+        - containerPort: {{ $serviceConfig.httpPort | default 8080 }}
+        {{- if $serviceConfig.memory_limits }}
+        resources:
+          limits:
+            memory: {{ $serviceConfig.memory_limits }}
+          requests:
+            memory: {{ $serviceConfig.memory_limits }}
+        {{- end }}
+        {{- if $serviceConfig.heap }}
+        env:
+        - name: JAVA_OPTS
+          value: {{ $serviceConfig.heap | quote }}
+        {{- end }}
+{{- end }}

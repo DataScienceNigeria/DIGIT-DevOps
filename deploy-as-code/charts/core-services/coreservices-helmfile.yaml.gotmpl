@@ -1,138 +1,194 @@
-# coreservices-helmfile.yaml
-
+# Fixed Core Services Helmfile
 templates:
   default: &default
-    # Use the common DIGIT chart - all services use the same chart template
     chart: ../../charts/common
     version: 0.1.0
     namespace: egov
-    # This prevents helmfile exiting when it encounters a missing file
-    # Valid values are "Error", "Warn", "Info", "Debug". The default is "Error"
-    # Use "Debug" to make missing files errors invisible at the default log level(--log-level=INFO)
+    installed: true  # Ensure this is set to true
     missingFileHandler: Warn
+    timeout: 600
+    wait: true
     values:
       - ../environments/env-secrets.yaml
       - ../environments/env.yaml
 
 releases:
-  - name: egov-accesscontrol
+  # Core infrastructure services (deploy first)
+  - name: configmaps
     installed: true
     <<: *default
 
-  - name: audit-service
+  # Authentication and authorization services
+  - name: egov-accesscontrol
     installed: true
     <<: *default
 
   - name: egov-enc-service
     installed: true
     needs:
-    - egov-mdms-service
+      - egov-mdms-service
+    <<: *default
+
+  # Core data services
+  - name: egov-mdms-service
+    installed: true
+    needs:
+      - configmaps
     <<: *default
 
   - name: egov-filestore
     installed: true
+    needs:
+      - configmaps
     <<: *default
 
   - name: egov-idgen
     installed: true
+    needs:
+      - configmaps
     <<: *default
 
   - name: egov-localization
     installed: true
+    needs:
+      - configmaps
     <<: *default
 
   - name: egov-location
     installed: true
-    <<: *default
-
-  - name: egov-mdms-service
-    installed: true
-    <<: *default
-
-  - name: egov-hrms
-    installed: true
     needs:
-    - egov-user
+      - configmaps
     <<: *default
 
-  - name: egov-indexer
-    installed: true
-    <<: *default
-
-  - name: egov-notification-mail
-    installed: true
-    <<: *default
-
-  - name: egov-notification-sms
-    installed: true
-    <<: *default
-
+  # User management services
   - name: egov-user
     installed: true
     needs:
-    - egov-enc-service
+      - egov-enc-service
+      - egov-mdms-service
     <<: *default
 
   - name: egov-otp
     installed: true
-    <<: *default
-
-  - name: egov-persister
-    installed: true
-    <<: *default
-
-  - name: egov-url-shortening
-    installed: true
-    <<: *default
-
-  - name: egov-workflow-v2
-    installed: true
     needs:
-    - egov-mdms-service
+      - egov-user
     <<: *default
 
   - name: user-otp
     installed: true
+    needs:
+      - egov-otp
     <<: *default
 
-  - name: configmaps
+  # HR management
+  - name: egov-hrms
     installed: true
+    needs:
+      - egov-user
+      - egov-mdms-service
     <<: *default
 
-  - name: citizen
+  # Workflow services
+  - name: egov-workflow-v2
     installed: true
+    needs:
+      - egov-mdms-service
+      - egov-user
     <<: *default
 
-  - name: digit-ui
+  # Notification services
+  - name: egov-notification-mail
     installed: true
+    needs:
+      - configmaps
     <<: *default
 
-  - name: employee
+  - name: egov-notification-sms
     installed: true
+    needs:
+      - configmaps
     <<: *default
 
-  - name: service-request
+  # Data processing services
+  - name: egov-indexer
     installed: true
+    needs:
+      - egov-mdms-service
     <<: *default
 
-  - name: pgr-services
+  - name: egov-persister
     installed: true
+    needs:
+      - egov-mdms-service
     <<: *default
 
-  - name: gateway
+  - name: audit-service
     installed: true
+    needs:
+      - egov-mdms-service
     <<: *default
-    values:
-      - ../environments/env-secrets.yaml
-      - ../environments/env.yaml
-      - serviceAccount:
-          create: true
-          name: "gateway-service-account"
 
-  - name: egov-pg-service
+  # Utility services
+  - name: egov-url-shortening
     installed: true
+    needs:
+      - configmaps
     <<: *default
 
   - name: egov-user-event
     installed: true
+    needs:
+      - egov-user
+    <<: *default
+
+  # Payment services
+  - name: egov-pg-service
+    installed: true
+    needs:
+      - egov-mdms-service
+    <<: *default
+
+  # Application services
+  - name: pgr-services
+    installed: true
+    needs:
+      - egov-workflow-v2
+      - egov-user
+    <<: *default
+
+  - name: service-request
+    installed: true
+    needs:
+      - egov-workflow-v2
+      - egov-user
+    <<: *default
+
+  # UI services
+  - name: citizen
+    installed: true
+    needs:
+      - egov-user
+      - egov-localization
+    <<: *default
+
+  - name: employee
+    installed: true
+    needs:
+      - egov-user
+      - egov-localization
+    <<: *default
+
+  - name: digit-ui
+    installed: true
+    needs:
+      - citizen
+      - employee
+    <<: *default
+
+  # Gateway (deploy last)
+  - name: gateway
+    installed: true
+    needs:
+      - egov-user
+      - egov-accesscontrol
     <<: *default

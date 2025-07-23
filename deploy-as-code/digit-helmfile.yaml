@@ -1,5 +1,4 @@
 #checking helmfile
 helmfiles:
-  # - path: ./charts/backbone-services/backboneservices-helmfile.yaml
   - path: ./charts/backbone-services/backboneservices-helmfile.yaml.gotmpl
   - path: ./charts/core-services/coreservices-helmfile.yaml.gotmpl

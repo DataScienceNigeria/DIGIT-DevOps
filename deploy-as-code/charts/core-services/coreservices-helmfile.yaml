@@ -1,9 +1,6 @@
-# coreservices-helmfile.yaml
-
 templates:
   default: &default
-    # Use the common DIGIT chart - all services use the same chart template
-    chart: ../../charts/common
+    chart: ./{{`{{ .Release.Name }}`}}
     version: 0.1.0
     namespace: egov
     # This prevents helmfile exiting when it encounters a missing file
@@ -15,124 +12,118 @@ templates:
       - ../environments/env.yaml
 
 releases:
-  - name: egov-accesscontrol
-    installed: true
+  - name: egov-accesscontrol # Replace with your desired namespace
+    installed: true # Replace with the version of your chart, if needed
     <<: *default
 
-  - name: audit-service
-    installed: true
+  - name: audit-service # Replace with your desired namespace
+    installed: true # Replace with the version of your chart, if needed
     <<: *default
 
-  - name: egov-enc-service
+  - name: egov-enc-service # Replace with your desired namespace
     installed: true
     needs:
     - egov-mdms-service
     <<: *default
 
-  - name: egov-filestore
+  - name: egov-filestore # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-idgen
+  - name: egov-idgen # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-localization
+  - name: egov-localization # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-location
+  - name: egov-location # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-mdms-service
+  - name: egov-mdms-service # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-hrms
+  - name: egov-hrms # Replace with your desired namespace
     installed: true
     needs:
     - egov-user
     <<: *default
 
-  - name: egov-indexer
+  - name: egov-indexer # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-notification-mail
+  - name: egov-notification-mail # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-notification-sms
+  - name: egov-notification-sms # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-user
+  - name: egov-user # Replace with your desired namespace
     installed: true
     needs:
     - egov-enc-service
     <<: *default
 
-  - name: egov-otp
+  - name: egov-otp # Replace with your desired namespace
+    installed: true
+    <<: *default
+  
+  - name: egov-persister # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-persister
+  - name: egov-url-shortening # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: egov-url-shortening
-    installed: true
-    <<: *default
-
-  - name: egov-workflow-v2
+  - name: egov-workflow-v2 # Replace with your desired namespace
     installed: true
     needs:
     - egov-mdms-service
     <<: *default
 
-  - name: user-otp
+  - name: user-otp # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: configmaps
+  - name: configmaps # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: citizen
+  - name: citizen # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: digit-ui
+  - name: digit-ui # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: employee
+  - name: employee # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: service-request
+  - name: service-request # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: pgr-services
+  - name: pgr-services # Replace with your desired namespace
+    installed: true
+    <<: *default
+  
+  - name: gateway # Replace with your desired namespace
     installed: true
     <<: *default
 
-  - name: gateway
+  - name: egov-pg-service # Replace with your desired namespace
     installed: true
     <<: *default
-    values:
-      - ../environments/env-secrets.yaml
-      - ../environments/env.yaml
-      - serviceAccount:
-          create: true
-          name: "gateway-service-account"
-
-  - name: egov-pg-service
-    installed: true
-    <<: *default
-
-  - name: egov-user-event
+  
+  - name: egov-user-event # Replace with your desired namespace
     installed: true
     <<: *default

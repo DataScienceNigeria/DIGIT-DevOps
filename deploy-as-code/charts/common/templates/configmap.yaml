@@ -1,0 +1,19 @@
+{{- $serviceName := .Values.name | default "unknown" -}}
+{{- if eq $serviceName "configmaps" }}
+{{- if .Values.configmaps }}
+{{- range $configmap, $config := .Values.configmaps }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $configmap }}
+  namespace: {{ $.Values.namespace | default "egov" }}
+{{- if $config.data }}
+data:
+{{- range $key, $value := $config.data }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
