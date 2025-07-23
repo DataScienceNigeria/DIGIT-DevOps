@@ -1,0 +1,147 @@
+# backboneservices-helmfile.yaml.gotmpl
+
+repositories:
+- name: bitnami
+  url: https://charts.bitnami.com/bitnami
+
+environments:
+  default:
+    values:
+      - db:
+          password: "test1234"
+          username: "digitltsdsn"
+          flywayUsername: "digitltsdsn"
+          flywayPassword: "test1234"
+      - elasticsearch:
+          password: "elastic_password"
+      - kafka:
+          # This clusterID in environments is for reference,
+          # the one in the 'set' block below will be used for the chart.
+          # clusterID: g4toTOWwTQSbFvZRDgHLqw== # Plain UUID for reference
+      - global:
+          domain: "certi-verse.com"
+      # Correct the path to go up one directory from 'charts/backbone-services'
+      - ../environments/env.yaml
+
+---
+
+templates:
+  default: &default
+    namespace: backbone
+    missingFileHandler: Warn
+
+releases:
+- name: cert-manager
+  chart: ./cert-manager
+  namespace: cert-manager
+  installed: true
+  version: v1.13.3
+  disableValidation: true
+  values:
+    - ./cert-manager/values.yaml
+
+- name: minio
+  installed: true
+  chart: ./minio
+  version: 13.3.1
+  <<: *default
+  values:
+    - ./minio/values.yaml
+
+- name: postgresql
+  installed: true
+  chart: ./postgresql
+  version: 11.9.13
+  <<: *default
+  values:
+    - ./postgresql/values.yaml
+  set:
+    - name: global.postgresql.auth.postgresPassword
+      value: "{{ .Environment.Values.db.password }}"
+    - name: global.postgresql.auth.username
+      value: "{{ .Environment.Values.db.username }}"
+    - name: global.postgresql.auth.password
+      value: "{{ .Environment.Values.db.password }}"
+    - name: global.postgresql.auth.flywayUsername
+      value: "{{ .Environment.Values.db.flywayUsername }}"
+    - name: global.postgresql.auth.flywayPassword
+      value: "{{ .Environment.Values.db.flywayPassword }}"
+
+- name: redis
+  installed: true
+  chart: ./redis
+  version: 7.2.4
+  <<: *default
+  values:
+    - ./redis/values.yaml
+
+- name: elasticsearch
+  chart: ./elasticsearch
+  version: 8.11.3
+  <<: *default
+  values:
+    - ./elasticsearch/values.yaml
+  set:
+    - name: secret.password
+      value: "{{ .Environment.Values.elasticsearch.password }}"
+
+- name: elasticsearch-data
+  chart: ./elasticsearch-data
+  version: 8.11.3
+  <<: *default
+  values:
+    - ./elasticsearch-data/values.yaml
+
+- name: kibana
+  chart: ./kibana
+  version: 8.11.3
+  force: true
+  <<: *default
+  values:
+    - ./kibana/values.yaml
+  set:
+    - name: ingress.hosts[0].host
+      value: "{{ .Environment.Values.global.domain }}"
+    - name: ingress.tls[0].secretName
+      value: "{{ .Environment.Values.global.domain }}-tls-certs"
+    - name: ingress.tls[0].hosts[0]
+      value: "{{ .Environment.Values.global.domain }}"
+
+- name: kafka-kraft
+  installed: true
+  chart: ./kafka-kraft
+  version: 26.2.0
+  <<: *default
+  values:
+    - ./kafka-kraft/values.yaml
+  set:
+      - name: kraft.clusterId
+        valueFrom:
+          secretKeyRef:
+            name: kafka-kraft-kraft-cluster-id
+            key: kraft-cluster-id
+      - name: auth.kafkaPassword
+        value: "TestKafkaPass123!"
+      - name: auth.adminPassword
+        value: "TestKafkaPass123!"
+      - name: auth.interBrokerPassword
+        value: "TestKafkaPass123!"
+
+- name: ingress-nginx
+  installed: true
+  chart: ./ingress-nginx
+  version: 4.10.0
+  <<: *default
+  values:
+    - ./ingress-nginx/values.yaml
+  set:
+    - name: domain
+      value: "{{ .Environment.Values.global.domain }}"
+
+- name: playground
+  installed: true
+  chart: ./playground
+  version: 0.1.0
+  <<: *default
+  values:
+    - ./playground/values.yaml
