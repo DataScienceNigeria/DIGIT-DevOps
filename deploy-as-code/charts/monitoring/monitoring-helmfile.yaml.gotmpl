@@ -24,6 +24,7 @@ releases:
   namespace: monitoring
   chart: grafana/loki-stack
   version: 2.10.1
+  timeout: 600
   values:
   - loki:
       persistence:
@@ -166,11 +167,53 @@ releases:
   namespace: monitoring
   chart: prometheus-community/kube-prometheus-stack
   version: 56.6.2
+  timeout: 900  # Increased timeout to 15 minutes
   disableValidation: true
+  # Add hooks to handle CRD upgrades properly
+  hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml"]
   values:
-  - prometheus:
+  - # CRD management
+    crds:
+      enabled: false  # Disable CRD creation since we handle it in hooks
+    
+    # Prometheus configuration
+    prometheus:
       prometheusSpec:
         retention: "30d"
+        retentionSize: "45GB"  # Set retention size to prevent disk full
+        walCompression: true   # Enable WAL compression
         storageSpec:
           volumeClaimTemplate:
             spec:
@@ -183,15 +226,33 @@ releases:
         serviceMonitorSelectorNilUsesHelmValues: false
         podMonitorSelectorNilUsesHelmValues: false
         ruleSelectorNilUsesHelmValues: false
+        # Reduced resource requirements to prevent OOM
         resources:
           limits:
-            cpu: 2000m
-            memory: 8Gi
+            cpu: 1000m
+            memory: 4Gi
           requests:
-            cpu: 500m
-            memory: 2Gi
+            cpu: 250m
+            memory: 1Gi
+        # Add additional scrape configs for better monitoring
+        additionalScrapeConfigs: []
+        # Configure remote write if needed
+        remoteWrite: []
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 2000
+        # Pod disruption budget
+        podDisruptionBudget:
+          enabled: true
+          minAvailable: 1
+    
+    # Grafana - disabled since we deploy separately
     grafana:
       enabled: false
+    
+    # AlertManager configuration
     alertmanager:
       enabled: true
       alertmanagerSpec:
@@ -211,30 +272,94 @@ releases:
           requests:
             cpu: 50m
             memory: 128Mi
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 2000
+        # Pod disruption budget
+        podDisruptionBudget:
+          enabled: true
+          minAvailable: 1
+    
+    # Prometheus Operator configuration
+    prometheusOperator:
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+      # Admission webhooks configuration
+      admissionWebhooks:
+        enabled: true
+        patch:
+          enabled: true
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+    
+    # Component configurations
     kubeApiServer:
       enabled: true
     kubelet:
       enabled: true
     kubeControllerManager:
-      enabled: false
+      enabled: false  # Usually not accessible in managed clusters
     coreDns:
       enabled: true
     kubeEtcd:
-      enabled: false
+      enabled: false  # Usually not accessible in managed clusters
     kubeScheduler:
-      enabled: false
+      enabled: false  # Usually not accessible in managed clusters
     kubeProxy:
       enabled: true
     kubeStateMetrics:
       enabled: true
     nodeExporter:
       enabled: true
+    
+    # Default rules
+    defaultRules:
+      create: true
+      rules:
+        alertmanager: true
+        etcd: false
+        configReloaders: true
+        general: true
+        k8s: true
+        kubeApiserverAvailability: true
+        kubeApiserverBurnrate: true
+        kubeApiserverHistogram: true
+        kubeApiserverSlos: true
+        kubelet: true
+        kubeProxy: true
+        kubePrometheusGeneral: true
+        kubePrometheusNodeRecording: true
+        kubernetesApps: true
+        kubernetesResources: true
+        kubernetesStorage: true
+        kubernetesSystem: true
+        kubeScheduler: false
+        kubeStateMetrics: true
+        network: true
+        node: true
+        nodeExporterAlerting: true
+        nodeExporterRecording: true
+        prometheus: true
+        prometheusOperator: true
 
 - name: jaeger-tracing
   installed: true
   namespace: backbone
   chart: jaegertracing/jaeger
-  version: 1.0.0 
+  version: 1.0.0
+  timeout: 600
   values:
   - # Use memory storage instead of Elasticsearch for now to avoid crashes
     storage:
@@ -315,6 +440,7 @@ releases:
   namespace: monitoring
   chart: grafana/grafana
   version: 7.3.0
+  timeout: 600
   disableValidation: true
   values:
   - # CRITICAL: Disable secret validation to allow configuration

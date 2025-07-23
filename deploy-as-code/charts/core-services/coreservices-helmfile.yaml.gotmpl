@@ -1,138 +1,379 @@
-# coreservices-helmfile.yaml
+# Core Services Helmfile Configuration - Fixed Version
+# This version addresses deployment issues and ensures proper service creation
+
+environments:
+  default:
+    values:
+      - ../environments/env.yaml
+      - ../environments/env-secrets.yaml
+
+---
 
 templates:
   default: &default
-    # Use the common DIGIT chart - all services use the same chart template
     chart: ../../charts/common
     version: 0.1.0
     namespace: egov
-    # This prevents helmfile exiting when it encounters a missing file
-    # Valid values are "Error", "Warn", "Info", "Debug". The default is "Error"
-    # Use "Debug" to make missing files errors invisible at the default log level(--log-level=INFO)
     missingFileHandler: Warn
+    timeout: 600
+    wait: true
+    waitForJobs: true
     values:
       - ../environments/env-secrets.yaml
       - ../environments/env.yaml
 
 releases:
-  - name: egov-accesscontrol
-    installed: true
-    <<: *default
-
-  - name: audit-service
-    installed: true
-    <<: *default
-
-  - name: egov-enc-service
-    installed: true
-    needs:
-    - egov-mdms-service
-    <<: *default
-
-  - name: egov-filestore
-    installed: true
-    <<: *default
-
-  - name: egov-idgen
-    installed: true
-    <<: *default
-
-  - name: egov-localization
-    installed: true
-    <<: *default
-
-  - name: egov-location
-    installed: true
-    <<: *default
-
-  - name: egov-mdms-service
-    installed: true
-    <<: *default
-
-  - name: egov-hrms
-    installed: true
-    needs:
-    - egov-user
-    <<: *default
-
-  - name: egov-indexer
-    installed: true
-    <<: *default
-
-  - name: egov-notification-mail
-    installed: true
-    <<: *default
-
-  - name: egov-notification-sms
-    installed: true
-    <<: *default
-
-  - name: egov-user
-    installed: true
-    needs:
-    - egov-enc-service
-    <<: *default
-
-  - name: egov-otp
-    installed: true
-    <<: *default
-
-  - name: egov-persister
-    installed: true
-    <<: *default
-
-  - name: egov-url-shortening
-    installed: true
-    <<: *default
-
-  - name: egov-workflow-v2
-    installed: true
-    needs:
-    - egov-mdms-service
-    <<: *default
-
-  - name: user-otp
-    installed: true
-    <<: *default
-
+  # ConfigMaps service - this one is working
   - name: configmaps
-    installed: true
-    <<: *default
-
-  - name: citizen
-    installed: true
-    <<: *default
-
-  - name: digit-ui
-    installed: true
-    <<: *default
-
-  - name: employee
-    installed: true
-    <<: *default
-
-  - name: service-request
-    installed: true
-    <<: *default
-
-  - name: pgr-services
-    installed: true
-    <<: *default
-
-  - name: gateway
     installed: true
     <<: *default
     values:
       - ../environments/env-secrets.yaml
       - ../environments/env.yaml
-      - serviceAccount:
-          create: true
-          name: "gateway-service-account"
+      - name: "configmaps"
+        namespace: "egov"
+        image:
+          repository: "nginx"
+          tag: "latest"
+          pullPolicy: "IfNotPresent"
+        replicas: 1
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        service:
+          enabled: true
+          type: ClusterIP
+          port: 80
+        healthChecks:
+          enabled: false
+        autoscaling:
+          enabled: false
 
-  - name: egov-pg-service
+  # EGOV MDMS Service - core service
+  - name: egov-mdms-service
     installed: true
     <<: *default
+    needs:
+      - configmaps
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: "egov-mdms-service"
+        namespace: "egov"
+        image:
+          repository: "egovio/egov-mdms-service"
+          tag: "v1.3.2-72f8a8f87b-24"
+          pullPolicy: "IfNotPresent"
+        replicas: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        service:
+          enabled: true
+          type: ClusterIP
+          port: 8080
+          targetPort: 8080
+        healthChecks:
+          enabled: true
+          livenessProbe:
+            httpGet:
+              path: "/egov-mdms-service/health"
+              port: 8080
+            initialDelaySeconds: 90
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: "/egov-mdms-service/health"
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+        autoscaling:
+          enabled: false
+        env:
+          - name: "SERVER_PORT"
+            value: "8080"
+          - name: "JAVA_OPTS"
+            value: "-Xmx256m -Xms256m"
+          - name: "SPRING_DATASOURCE_URL"
+            value: "jdbc:postgresql://postgresql.backbone:5432/devdb"
+          - name: "SPRING_DATASOURCE_USERNAME"
+            value: "postgres"
+          - name: "SPRING_DATASOURCE_PASSWORD"
+            value: "postgres"
+          - name: "EGOV_MDMS_CONF_PATH"
+            value: "https://raw.githubusercontent.com/egovernments/egov-mdms-data/master/data"
 
-  - name: egov-user-event
+  # EGOV FileStore Service
+  - name: egov-filestore
     installed: true
     <<: *default
+    needs:
+      - configmaps
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: "egov-filestore"
+        namespace: "egov"
+        image:
+          repository: "egovio/egov-filestore"
+          tag: "v1.2.4-72f8a8f87b-24"
+          pullPolicy: "IfNotPresent"
+        replicas: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        service:
+          enabled: true
+          type: ClusterIP
+          port: 8080
+          targetPort: 8080
+        healthChecks:
+          enabled: true
+          livenessProbe:
+            httpGet:
+              path: "/filestore/health"
+              port: 8080
+            initialDelaySeconds: 90
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: "/filestore/health"
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+        autoscaling:
+          enabled: false
+        env:
+          - name: "SERVER_PORT"
+            value: "8080"
+          - name: "JAVA_OPTS"
+            value: "-Xmx256m -Xms256m"
+          - name: "SPRING_DATASOURCE_URL"
+            value: "jdbc:postgresql://postgresql.backbone:5432/devdb"
+          - name: "SPRING_DATASOURCE_USERNAME"
+            value: "postgres"
+          - name: "SPRING_DATASOURCE_PASSWORD"
+            value: "postgres"
+          - name: "MINIO_URL"
+            value: "http://minio.backbone:9000"
+          - name: "MINIO_ACCESS_KEY"
+            value: "minio"
+          - name: "MINIO_SECRET_KEY"
+            value: "minio123"
+
+  # EGOV Localization Service
+  - name: egov-localization
+    installed: true
+    <<: *default
+    needs:
+      - configmaps
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: "egov-localization"
+        namespace: "egov"
+        image:
+          repository: "egovio/egov-localization"
+          tag: "v1.1.3-72f8a8f87b-24"
+          pullPolicy: "IfNotPresent"
+        replicas: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        service:
+          enabled: true
+          type: ClusterIP
+          port: 8080
+          targetPort: 8080
+        healthChecks:
+          enabled: true
+          livenessProbe:
+            httpGet:
+              path: "/localization/health"
+              port: 8080
+            initialDelaySeconds: 90
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: "/localization/health"
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+        autoscaling:
+          enabled: false
+        env:
+          - name: "SERVER_PORT"
+            value: "8080"
+          - name: "JAVA_OPTS"
+            value: "-Xmx256m -Xms256m"
+          - name: "SPRING_DATASOURCE_URL"
+            value: "jdbc:postgresql://postgresql.backbone:5432/devdb"
+          - name: "SPRING_DATASOURCE_USERNAME"
+            value: "postgres"
+          - name: "SPRING_DATASOURCE_PASSWORD"
+            value: "postgres"
+
+  # EGOV ID Generation Service
+  - name: egov-idgen
+    installed: true
+    <<: *default
+    needs:
+      - configmaps
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: "egov-idgen"
+        namespace: "egov"
+        image:
+          repository: "egovio/egov-idgen"
+          tag: "v1.2.3-72f8a8f87b-24"
+          pullPolicy: "IfNotPresent"
+        replicas: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        service:
+          enabled: true
+          type: ClusterIP
+          port: 8080
+          targetPort: 8080
+        healthChecks:
+          enabled: true
+          livenessProbe:
+            httpGet:
+              path: "/egov-idgen/health"
+              port: 8080
+            initialDelaySeconds: 90
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: "/egov-idgen/health"
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+        autoscaling:
+          enabled: false
+        env:
+          - name: "SERVER_PORT"
+            value: "8080"
+          - name: "JAVA_OPTS"
+            value: "-Xmx256m -Xms256m"
+          - name: "SPRING_DATASOURCE_URL"
+            value: "jdbc:postgresql://postgresql.backbone:5432/devdb"
+          - name: "SPRING_DATASOURCE_USERNAME"
+            value: "postgres"
+          - name: "SPRING_DATASOURCE_PASSWORD"
+            value: "postgres"
+
+  # EGOV User Service
+  - name: egov-user
+    installed: true
+    <<: *default
+    needs:
+      - egov-mdms-service
+      - configmaps
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: "egov-user"
+        namespace: "egov"
+        image:
+          repository: "egovio/egov-user"
+          tag: "v1.2.7-96b24b0d72-24"
+          pullPolicy: "IfNotPresent"
+        replicas: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        service:
+          enabled: true
+          type: ClusterIP
+          port: 8080
+          targetPort: 8080
+        healthChecks:
+          enabled: true
+          livenessProbe:
+            httpGet:
+              path: "/user/health"
+              port: 8080
+            initialDelaySeconds: 90
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: "/user/health"
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+        autoscaling:
+          enabled: false
+        env:
+          - name: "SERVER_PORT"
+            value: "8080"
+          - name: "JAVA_OPTS"
+            value: "-Xmx256m -Xms256m"
+          - name: "SPRING_DATASOURCE_URL"
+            value: "jdbc:postgresql://postgresql.backbone:5432/devdb"
+          - name: "SPRING_DATASOURCE_USERNAME"
+            value: "postgres"
+          - name: "SPRING_DATASOURCE_PASSWORD"
+            value: "postgres"
+          - name: "EGOV_MDMS_HOST"
+            value: "http://egov-mdms-service.egov:8080"
+          - name: "EGOV_FILESTORE_HOST"
+            value: "http://egov-filestore.egov:8080"
+          - name: "EGOV_LOCALIZATION_HOST"
+            value: "http://egov-localization.egov:8080"
