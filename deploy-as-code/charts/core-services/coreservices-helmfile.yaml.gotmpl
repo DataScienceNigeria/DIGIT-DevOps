@@ -4,30 +4,20 @@ templates:
     chart: ../../charts/common
     version: 0.1.0
     namespace: egov
-    installed: true  # Ensure this is set to true
+    installed: true
     missingFileHandler: Warn
     timeout: 600
     wait: true
-    values:
-      - ../environments/env-secrets.yaml
-      - ../environments/env.yaml
 
 releases:
   # Core infrastructure services (deploy first)
   - name: configmaps
     installed: true
     <<: *default
-
-  # Authentication and authorization services
-  - name: egov-accesscontrol
-    installed: true
-    <<: *default
-
-  - name: egov-enc-service
-    installed: true
-    needs:
-      - egov-mdms-service
-    <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: configmaps
 
   # Core data services
   - name: egov-mdms-service
@@ -35,30 +25,69 @@ releases:
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-mdms-service
+
+  # Authentication and authorization services
+  - name: egov-accesscontrol
+    installed: true
+    <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-accesscontrol
+
+  - name: egov-enc-service
+    installed: true
+    needs:
+      - egov-mdms-service
+    <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-enc-service
 
   - name: egov-filestore
     installed: true
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-filestore
 
   - name: egov-idgen
     installed: true
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-idgen
 
   - name: egov-localization
     installed: true
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-localization
 
   - name: egov-location
     installed: true
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-location
 
   # User management services
   - name: egov-user
@@ -67,18 +96,30 @@ releases:
       - egov-enc-service
       - egov-mdms-service
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-user
 
   - name: egov-otp
     installed: true
     needs:
       - egov-user
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-otp
 
   - name: user-otp
     installed: true
     needs:
       - egov-otp
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: user-otp
 
   # HR management
   - name: egov-hrms
@@ -87,6 +128,10 @@ releases:
       - egov-user
       - egov-mdms-service
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-hrms
 
   # Workflow services
   - name: egov-workflow-v2
@@ -95,6 +140,10 @@ releases:
       - egov-mdms-service
       - egov-user
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-workflow-v2
 
   # Notification services
   - name: egov-notification-mail
@@ -102,12 +151,20 @@ releases:
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-notification-mail
 
   - name: egov-notification-sms
     installed: true
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-notification-sms
 
   # Data processing services
   - name: egov-indexer
@@ -115,18 +172,30 @@ releases:
     needs:
       - egov-mdms-service
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-indexer
 
   - name: egov-persister
     installed: true
     needs:
       - egov-mdms-service
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-persister
 
   - name: audit-service
     installed: true
     needs:
       - egov-mdms-service
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: audit-service
 
   # Utility services
   - name: egov-url-shortening
@@ -134,12 +203,20 @@ releases:
     needs:
       - configmaps
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-url-shortening
 
   - name: egov-user-event
     installed: true
     needs:
       - egov-user
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-user-event
 
   # Payment services
   - name: egov-pg-service
@@ -147,6 +224,10 @@ releases:
     needs:
       - egov-mdms-service
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: egov-pg-service
 
   # Application services
   - name: pgr-services
@@ -155,6 +236,10 @@ releases:
       - egov-workflow-v2
       - egov-user
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: pgr-services
 
   - name: service-request
     installed: true
@@ -162,6 +247,10 @@ releases:
       - egov-workflow-v2
       - egov-user
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: service-request
 
   # UI services
   - name: citizen
@@ -170,6 +259,10 @@ releases:
       - egov-user
       - egov-localization
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: citizen
 
   - name: employee
     installed: true
@@ -177,6 +270,10 @@ releases:
       - egov-user
       - egov-localization
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: employee
 
   - name: digit-ui
     installed: true
@@ -184,6 +281,10 @@ releases:
       - citizen
       - employee
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: digit-ui
 
   # Gateway (deploy last)
   - name: gateway
@@ -192,3 +293,7 @@ releases:
       - egov-user
       - egov-accesscontrol
     <<: *default
+    values:
+      - ../environments/env-secrets.yaml
+      - ../environments/env.yaml
+      - name: gateway
