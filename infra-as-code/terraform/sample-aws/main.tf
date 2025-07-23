@@ -99,7 +99,7 @@ data "aws_iam_policy_document" "filestore_bucket_policy" {
 }
 
 resource "aws_iam_policy" "filestore_policy" {
-  name        = "filestore_policy"  # Replace with your desired policy name
+  name        = "filestore_policy-1"  # Replace with your desired policy name
   description = "Filestore Policy for S3 access"
   policy = jsonencode({
     "Version" = "2012-10-17"
