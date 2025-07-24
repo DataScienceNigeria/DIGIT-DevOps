@@ -38,7 +38,7 @@ spec:
           value: {{ $serviceConfig.heap | quote }}
         {{- end }}
         {{- if $serviceConfig.env }}
-        {{- tpl $serviceConfig.env . | nindent 8 }}
+        {{- toYaml $serviceConfig.env | nindent 8 }}
         {{- end }}
         {{- end }}
 {{- end }}
