@@ -1,0 +1,712 @@
+# Repositories configuration
+repositories:
+- name: grafana
+  url: https://grafana.github.io/helm-charts
+- name: prometheus-community
+  url: https://prometheus-community.github.io/helm-charts
+- name: jaegertracing
+  url: https://jaegertracing.github.io/helm-charts
+
+---
+# Environments configuration
+environments:
+  default:
+    values:
+    - ../environments/env.yaml
+    - ../environments/env-secrets.yaml
+
+---
+# Releases configuration
+releases:
+
+- name: loki-stack
+  installed: true
+  namespace: monitoring
+  chart: grafana/loki-stack
+  version: 2.10.1
+  timeout: 600
+  values:
+  - loki:
+      persistence:
+        enabled: true
+        storageClassName: "gp2"
+        size: "10Gi"
+      # Simplified Loki configuration to avoid crashes
+      config:
+        auth_enabled: false
+        server:
+          http_listen_port: 3100
+          grpc_listen_port: 9096
+        common:
+          path_prefix: /data/loki
+          storage:
+            filesystem:
+              chunks_directory: /data/loki/chunks
+              rules_directory: /data/loki/rules
+          replication_factor: 1
+          ring:
+            instance_addr: 127.0.0.1
+            kvstore:
+              store: inmemory
+        query_scheduler:
+          max_outstanding_requests_per_tenant: 32768
+        schema_config:
+          configs:
+            - from: 2020-10-24
+              store: boltdb-shipper
+              object_store: filesystem
+              schema: v11
+              index:
+                prefix: index_
+                period: 24h
+        storage_config:
+          boltdb_shipper:
+            active_index_directory: /data/loki/boltdb-shipper-active
+            cache_location: /data/loki/boltdb-shipper-cache
+            cache_ttl: 24h
+            shared_store: filesystem
+          filesystem:
+            directory: /data/loki/chunks
+        compactor:
+          working_directory: /data/loki/boltdb-shipper-compactor
+          shared_store: filesystem
+        limits_config:
+          reject_old_samples: true
+          reject_old_samples_max_age: 168h
+          allow_structured_metadata: false
+        chunk_store_config:
+          max_look_back_period: 0s
+        table_manager:
+          retention_deletes_enabled: false
+          retention_period: 0s
+        ruler:
+          storage:
+            type: local
+            local:
+              directory: /data/loki/rules
+          rule_path: /data/loki/rules-temp
+          alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring:9093
+          ring:
+            kvstore:
+              store: inmemory
+          enable_api: true
+      # Resource limits to prevent OOM
+      resources:
+        limits:
+          cpu: 500m
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+    promtail:
+      enabled: true
+      config:
+        clients:
+        - url: http://loki-stack:3100/loki/api/v1/push
+        positions:
+          filename: /run/promtail/positions.yaml
+        target_config:
+          sync_period: 10s
+        scrape_configs:
+        - job_name: kubernetes-pods
+          kubernetes_sd_configs:
+          - role: pod
+          pipeline_stages:
+          - cri: {}
+          relabel_configs:
+          - source_labels:
+            - __meta_kubernetes_pod_controller_name
+            regex: ([0-9a-z-.]+?)(-[0-9a-f]{8,10})?
+            target_label: __tmp_controller_name
+          - source_labels:
+            - __meta_kubernetes_pod_label_app_kubernetes_io_name
+            - __meta_kubernetes_pod_label_app
+            - __tmp_controller_name
+            - __meta_kubernetes_pod_name
+            regex: ^;*([^;]+)(;.*)?$
+            target_label: app
+            replacement: $1
+          - source_labels:
+            - __meta_kubernetes_pod_label_app_kubernetes_io_component
+            - __meta_kubernetes_pod_label_component
+            regex: ^;*([^;]+)(;.*)?$
+            target_label: component
+            replacement: $1
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_namespace
+            target_label: namespace
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_name
+            target_label: pod
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_container_name
+            target_label: container
+          - replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+            - __meta_kubernetes_pod_uid
+            - __meta_kubernetes_pod_container_name
+            target_label: __path__
+      resources:
+        limits:
+          cpu: 200m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 64Mi
+    grafana:
+      enabled: false
+    fluent-bit:
+      enabled: false
+
+- name: kube-prometheus-stack
+  installed: true
+  namespace: monitoring
+  chart: prometheus-community/kube-prometheus-stack
+  version: 56.6.2
+  timeout: 900  # Increased timeout to 15 minutes
+  disableValidation: true
+  # Add hooks to handle CRD upgrades properly
+  hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml"]
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args: ["apply", "--server-side", "-f", "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.71.2/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml"]
+  values:
+  - # CRD management
+    crds:
+      enabled: false  # Disable CRD creation since we handle it in hooks
+    
+    # Prometheus configuration
+    prometheus:
+      prometheusSpec:
+        retention: "30d"
+        retentionSize: "45GB"  # Set retention size to prevent disk full
+        walCompression: true   # Enable WAL compression
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: "gp2"
+              accessModes: 
+              - ReadWriteOnce
+              resources:
+                requests:
+                  storage: "50Gi"
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        # Reduced resource requirements to prevent OOM
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 4Gi
+          requests:
+            cpu: 250m
+            memory: 1Gi
+        # Add additional scrape configs for better monitoring
+        additionalScrapeConfigs: []
+        # Configure remote write if needed
+        remoteWrite: []
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 2000
+        # Pod disruption budget
+        podDisruptionBudget:
+          enabled: true
+          minAvailable: 1
+    
+    # Grafana - disabled since we deploy separately
+    grafana:
+      enabled: false
+    
+    # AlertManager configuration
+    alertmanager:
+      enabled: true
+      alertmanagerSpec:
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: "gp2"
+              accessModes:
+              - ReadWriteOnce
+              resources:
+                requests:
+                  storage: "10Gi"
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 2000
+        # Pod disruption budget
+        podDisruptionBudget:
+          enabled: true
+          minAvailable: 1
+    
+    # Prometheus Operator configuration
+    prometheusOperator:
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+      # Admission webhooks configuration
+      admissionWebhooks:
+        enabled: true
+        patch:
+          enabled: true
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+    
+    # Component configurations
+    kubeApiServer:
+      enabled: true
+    kubelet:
+      enabled: true
+    kubeControllerManager:
+      enabled: false  # Usually not accessible in managed clusters
+    coreDns:
+      enabled: true
+    kubeEtcd:
+      enabled: false  # Usually not accessible in managed clusters
+    kubeScheduler:
+      enabled: false  # Usually not accessible in managed clusters
+    kubeProxy:
+      enabled: true
+    kubeStateMetrics:
+      enabled: true
+    nodeExporter:
+      enabled: true
+    
+    # Default rules
+    defaultRules:
+      create: true
+      rules:
+        alertmanager: true
+        etcd: false
+        configReloaders: true
+        general: true
+        k8s: true
+        kubeApiserverAvailability: true
+        kubeApiserverBurnrate: true
+        kubeApiserverHistogram: true
+        kubeApiserverSlos: true
+        kubelet: true
+        kubeProxy: true
+        kubePrometheusGeneral: true
+        kubePrometheusNodeRecording: true
+        kubernetesApps: true
+        kubernetesResources: true
+        kubernetesStorage: true
+        kubernetesSystem: true
+        kubeScheduler: false
+        kubeStateMetrics: true
+        network: true
+        node: true
+        nodeExporterAlerting: true
+        nodeExporterRecording: true
+        prometheus: true
+        prometheusOperator: true
+
+- name: jaeger-tracing
+  installed: true
+  namespace: backbone
+  chart: jaegertracing/jaeger
+  version: 1.0.0
+  timeout: 600
+  values:
+  - # Use memory storage instead of Elasticsearch for now to avoid crashes
+    storage:
+      type: memory
+      memory:
+        max_traces: 50000
+    # Alternative: Use Elasticsearch with proper configuration
+    # storage:
+    #   type: elasticsearch
+    #   elasticsearch:
+    #     host: "elasticsearch-data.backbone"
+    #     port: 9200
+    #     scheme: "http"
+    #     nodesWanOnly: false
+    #     username: ""
+    #     password: ""
+    #     indexPrefix: "jaeger"
+    #     tags_as_fields:
+    #       include: "http.status_code,error"
+    #       config_file: ""
+    #     num_shards: 1
+    #     num_replicas: 0
+    query:
+      ingress:
+        enabled: true
+        annotations:
+          kubernetes.io/ingress.class: nginx
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+        hosts:
+        - jaeger.certi-verse.com
+        tls:
+        - secretName: jaeger-tls
+          hosts:
+          - jaeger.certi-verse.com
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+    collector:
+      service:
+        type: ClusterIP
+        grpc:
+          port: 14250
+        http:
+          port: 14268
+        zipkin:
+          port: 9411
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+    agent:
+      service:
+        type: ClusterIP
+        zipkinThriftPort: 5775
+        compactPort: 6831
+        binaryPort: 6832
+        samplingPort: 5778
+      resources:
+        limits:
+          cpu: 200m
+          memory: 256Mi
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    # Disable Cassandra since we're using memory/elasticsearch
+    cassandra:
+      enabled: false
+
+- name: grafana
+  installed: true
+  namespace: monitoring
+  chart: grafana/grafana
+  version: 7.3.0
+  timeout: 600
+  disableValidation: true
+  values:
+  - # CRITICAL: Disable secret validation to allow configuration
+    assertNoLeakedSecrets: false
+    
+    # Basic Grafana configuration
+    adminUser: admin
+    adminPassword: "admin123"
+    
+    # Image configuration
+    image:
+      registry: docker.io
+      repository: grafana/grafana
+      tag: ""
+      pullPolicy: IfNotPresent
+    
+    # Service configuration
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 3000
+      targetPort: 3000
+    
+    # Persistence configuration
+    persistence:
+      enabled: true
+      type: pvc
+      storageClassName: "gp2"
+      accessModes:
+        - ReadWriteOnce
+      size: "10Gi"
+      finalizers:
+        - kubernetes.io/pvc-protection
+    
+    # Ingress configuration
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      path: /monitoring(/|$)(.*)
+      pathType: Prefix
+      hosts:
+        - certi-verse.com
+      tls:
+        - secretName: grafana-tls
+          hosts:
+            - certi-verse.com
+    
+    # RBAC configuration
+    rbac:
+      create: true
+      pspEnabled: false
+      namespaced: false
+    
+    # ServiceAccount configuration
+    serviceAccount:
+      create: true
+      autoMount: true
+    
+    # Security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 472
+      runAsGroup: 472
+      fsGroup: 472
+    
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    
+    # Health checks
+    readinessProbe:
+      httpGet:
+        path: /api/health
+        port: 3000
+    
+    livenessProbe:
+      httpGet:
+        path: /api/health
+        port: 3000
+      initialDelaySeconds: 60
+      timeoutSeconds: 30
+      failureThreshold: 10
+    
+    # Datasources configuration
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://kube-prometheus-stack-prometheus.monitoring:9090
+          access: proxy
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://loki-stack.monitoring:3100
+          access: proxy
+        - name: Jaeger
+          type: jaeger
+          url: http://jaeger-tracing-query.backbone:16686
+          access: proxy
+    
+    # Dashboard providers
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+        - name: 'kubernetes'
+          orgId: 1
+          folder: 'Kubernetes'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/kubernetes
+    
+    # Dashboards
+    dashboards:
+      default:
+        prometheus-stats:
+          gnetId: 2
+          revision: 2
+          datasource: Prometheus
+        kubernetes-cluster-monitoring:
+          gnetId: 7249
+          revision: 1
+          datasource: Prometheus
+      kubernetes:
+        kubernetes-pod-monitoring:
+          gnetId: 6417
+          revision: 1
+          datasource: Prometheus
+        kubernetes-deployment-statefulset-daemonset-metrics:
+          gnetId: 8588
+          revision: 1
+          datasource: Prometheus
+        kubernetes-cluster-monitoring-via-prometheus:
+          gnetId: 315
+          revision: 3
+          datasource: Prometheus
+    
+    # Plugins
+    plugins:
+    - grafana-piechart-panel
+    - grafana-worldmap-panel
+    - grafana-clock-panel
+    - grafana-simple-json-datasource
+    
+    # Environment variables
+    env:
+      GF_EXPLORE_ENABLED: true
+      GF_PANELS_DISABLE_SANITIZE_HTML: true
+      GF_LOG_FILTERS: rendering:debug
+    
+    # Grafana.ini configuration - minimal to avoid conflicts
+    grafana.ini:
+      paths:
+        data: /var/lib/grafana/
+        logs: /var/log/grafana
+        plugins: /var/lib/grafana/plugins
+        provisioning: /etc/grafana/provisioning
+      analytics:
+        check_for_updates: false
+        reporting_enabled: false
+      log:
+        mode: console
+        level: info
+      server:
+        protocol: http
+        http_port: 3000
+        domain: certi-verse.com
+        enforce_domain: false
+        root_url: https://certi-verse.com/monitoring
+        serve_from_sub_path: true
+      users:
+        allow_sign_up: false
+        allow_org_create: false
+        auto_assign_org: true
+        auto_assign_org_role: Viewer
+        default_theme: dark
+      auth.anonymous:
+        enabled: false
+    
+    # Resources
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    
+    # Sidecar configuration - simplified
+    sidecar:
+      dashboards:
+        enabled: false
+      datasources:
+        enabled: false
+      alerts:
+        enabled: false
+      plugins:
+        enabled: false
+      notifiers:
+        enabled: false
+    
+    # Test framework
+    testFramework:
+      enabled: false
+    
+    # Init containers
+    initChownData:
+      enabled: true
+      image:
+        registry: docker.io
+        repository: library/busybox
+        tag: "1.31.1"
+        pullPolicy: IfNotPresent
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+        seccompProfile:
+          type: RuntimeDefault
+        capabilities:
+          add:
+            - CHOWN
+    
+    # Deployment strategy
+    deploymentStrategy:
+      type: RollingUpdate
+    
+    # Node selection
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    
+    # Autoscaling
+    autoscaling:
+      enabled: false
+    
+    # Replicas
+    replicas: 1
+    
+    # Create configmap
+    createConfigmap: true
+    
+    # Enable service links
+    enableServiceLinks: true
+    
+    # Use StatefulSet
+    useStatefulSet: false
+    
+    # Extra objects
+    extraObjects: []

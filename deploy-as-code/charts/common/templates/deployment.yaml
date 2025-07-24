@@ -31,9 +31,14 @@ spec:
           requests:
             memory: {{ $serviceConfig.memory_limits }}
         {{- end }}
-        {{- if $serviceConfig.heap }}
+        {{- if or $serviceConfig.heap $serviceConfig.env }}
         env:
+        {{- if $serviceConfig.heap }}
         - name: JAVA_OPTS
           value: {{ $serviceConfig.heap | quote }}
+        {{- end }}
+        {{- if $serviceConfig.env }}
+        {{- tpl $serviceConfig.env . | nindent 8 }}
+        {{- end }}
         {{- end }}
 {{- end }}
